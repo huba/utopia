@@ -24,6 +24,7 @@ module Utopia
 		class LazyHash
 			def initialize(&block)
 				@changed = false
+				@invalidate = false
 				@values = nil
 				
 				@loader = block
@@ -56,6 +57,15 @@ module Utopia
 				@changed = true if @values.include? key
 				
 				@values.delete(key)
+			end
+
+			def invalidate!
+				# tell the user agent to expire the cookie as per RFC 6265
+				@invalidate = true
+			end
+
+			def invalidated?
+				@invalidate
 			end
 			
 			def changed?

@@ -119,7 +119,9 @@ module Utopia
 		end
 		
 		def update_session(env, session_hash, headers)
-			if session_hash.needs_update?(@update_timeout)
+			if session_hash.invalidated?
+				invalidate(headers)
+			elsif session_hash.needs_update?(@update_timeout)
 				values = session_hash.values
 				
 				values[:updated_at] = Time.now.utc
@@ -178,9 +180,18 @@ module Utopia
 		def commit(value, headers)
 			cookie = {
 				value: value,
-				expires: expires
+				expires: expires,
 			}.merge(@cookie_defaults)
 			
+			Rack::Utils.set_cookie_header!(headers, @cookie_name, cookie)
+		end
+
+		def invalidate(headers)
+			cookie = {
+				value: "",
+				expires: Time.at(0)
+			}
+
 			Rack::Utils.set_cookie_header!(headers, @cookie_name, cookie)
 		end
 		
